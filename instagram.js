@@ -7,7 +7,6 @@ var fetch = require('isomorphic-fetch')
 // const PORT = process.env.PORT || 8080;
 // app.use(bodyParser.urlencoded({ extended: false }));
 // app.use(bodyParser.json());
-var request = require('ajax-request');
 const puppeteer = require('puppeteer');
 function sleep(ms) {
     // console.log('waiting for '+ ms);
@@ -28,39 +27,44 @@ async function followers() {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Ffollowintheirfootsteps%2F&source=profile_posts');
+    await page.goto('https://www.instagram.com/accounts/login/?next=%2Ffollow4followdc.new%2F&source=profile_posts');
     await page.waitFor('input[name=username]');
     await page.type('input[name=username]', '');
     await page.type('input[name=password]', '');
     await page.click('button[type=submit]');
-    await sleep(2000);
+    await sleep(5000);
     try {
         const linkHandlers = await page.$x("//button[contains(text(), 'Not Now')]");
         await linkHandlers[0].click();
     } catch(e) {
         console.log('noo')
     }
+    await sleep(5000);
     try {
         await sleep(2000);
         const linkHandlers = await page.$x('//*[@id="react-root"]/section/main/div/ul/li[2]/a')
         await linkHandlers[0].click();
     } catch(e) {
-        console.log(e)
+        console.log('fail to find link')
     }
 
 
     var n = 5000;
     var i = 0;
-    await sleep(2000);
+    await sleep(5000);
     autoScroll(page);
     while (i < n){
 
-        var list = await page.$$('.PZuss li');
+        var list = await page.$$(' .jjbaz li');
         var users = [];
         for (var li of list) {
+	try {
             var user = await li.$eval('.notranslate', e => e.getAttribute('href'));
             user = user.substring(1, user.length-1);
             users = users.concat(user);
+	} catch(e) {
+		console.log('notranslate');
+	}
             console.log(users);
         }
         await sleep(2000);
@@ -73,7 +77,7 @@ async function followers() {
         }
     }
 }
-
+followers();
 async function following() {
 
     const browser = await puppeteer.launch({headless: false});
@@ -370,16 +374,7 @@ async function follow(user, pass) {
         await sleep(108000);
     }
 }
-async function start() {
-    // follow('mountainbiking4lyf');
-    // await sleep(10800);
-    follow('catz_4_lyf_');
-    await sleep(10800);
-    follow('kittie4lyf');
-    await sleep(10800);
-    follow('mtb_for_lifez');
-}
-start();
+
 async function autoScroll(page){
     await page.evaluate(async () => {
         await new Promise((resolve, reject) => {
