@@ -30,11 +30,13 @@ console.log('' +
 
 program
     .version('1.0')
-    .option('--followers [value]', 'Scrape followers of a user --followers muaz_asif -u USERNAME -p PASSWORD -f FILENAME')
-    .option('--following [value]', 'Scrape following of a user --following muaz_asif -u USERNAME -p PASSWORD -f FILENAME')
+    .option('--followers [value]', 'Scrape followers of a user --followers target-username -u USERNAME -p PASSWORD -f FILENAME')
+    .option('--following [value]', 'Scrape following of a user --following target-username -u USERNAME -p PASSWORD -f FILENAME')
     .option('--posts [value]', 'Scrape posts from location, profile, tag, search page --posts https://www.instagram.com/muaz_asif -f FILENAME')
     .option('--likers [value]', 'Scrape likers from post --likers https://www.instagram.com/p/BtJOmVqFue1/ -u USERNAME -p PASSWORD -f FILENAME')
-    .option('--like [value]', 'Like posts (import posts from json file) --like ./file/File.json  -u USERNAME -p PASSWORD -i SECONDS')
+    .option('--like [value]', 'Like posts (import posts from json file) --like ./file/Posts.json  -u USERNAME -p PASSWORD -i SECONDS')
+    .option('--comment [value]', 'Like posts (import posts from json file) --comment ./file/Posts.json -f ./file/Comments.json  -u USERNAME -p PASSWORD -i SECONDS')
+    .option('--follow [value]', 'Follow users  --follow ./file/Users.json  -u USERNAME -p PASSWORD -i SECONDS')
     .option('-u, --username [value]', 'Your Username')
     .option('-p, --password [value]', 'Your Password')
     .option('-f, --file [value]', 'File Name', 'File')
@@ -46,10 +48,14 @@ program
      if (program.posts)
         posts(program.posts,program.file);
      if (program.likers)
-         likers(program.likers,program. username,program.password,program.file);
+         likers(program.likers,program.username,program.password,program.file);
     if (program.like)
-         like(program.like,program. username,program.password,program.interval);
-    console.log(program)
+         like(program.like,program.username,program.password,program.interval);
+    if (program.comment)
+        comment(program.comment,program.file,program.username,program.password,program.interval);
+    if (program.follow)
+        follow(program.follow,program.username,program.password,program.interval);
+console.log(program)
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -57,7 +63,7 @@ function sleep(ms) {
 
 
 async function followers(target,user,pass,file,h) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
@@ -121,7 +127,7 @@ async function followers(target,user,pass,file,h) {
 }
 
 async function following(target,user,pass,file) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
@@ -171,7 +177,7 @@ async function following(target,user,pass,file) {
 }
 
 async function posts(url,file) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.goto(url);
@@ -202,7 +208,7 @@ async function posts(url,file) {
 }
 
 async function likers(post,user,pass,file) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
@@ -247,7 +253,7 @@ async function likers(post,user,pass,file) {
 }
 
 async function like(location,user,pass,interval) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.goto('https://www.instagram.com/accounts/login/');
@@ -268,101 +274,63 @@ async function like(location,user,pass,interval) {
     }
 }
 
-async function comment() {
+async function comment(posts,comments,user,pass,interval) {
     console.log('launching puppeteer')
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Fgentlebikers%2F&source=profile_posts');
+    await page.goto('https://www.instagram.com/accounts/login/');
     await page.waitFor('input[name=username]');
-    await page.type('input[name=username]', '');
-    await page.type('input[name=password]', '');
+    await page.type('input[name=username]', user);
+    await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
     await sleep(2000);
-    var links = await getjson();
-    var comments = ["That's amazing! I like it ๐","Love it !", "Your posts are truly amazing ๐","Moments that stay forever","This shot is great ๐”", "๐๐๐๐ ", "Ah such a happy location! ๐‘", "Stunning ๐‘", "๐wow, great pic๐‘"]
+    var links = await fse.readFile(posts);
+    var comments = await fse.readFile(comments);
+    links = JSON.parse(links);
+    comments = JSON.parse(comments);
     for (var li of links) {
         await page.goto(li);
         var comment = comments[Math.floor(Math.random()*comments.length)];
         await page.type('textarea', comment);
+        clear();
         console.log(comment + 'on '+ li)
         await page.keyboard.press('Enter');
-        await sleep(180000);
+        await sleep(interval*1000);
     }
 }
 
 
-async function likecomment() {
-    console.log('launching puppeteer')
-    const browser = await puppeteer.launch({headless: true});
+
+async function follow(users,user,pass,interval) {
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Fgentlebikers%2F&source=profile_posts');
-    await page.waitFor('input[name=username]');
-    await page.type('input[name=username]', '');
-    await page.type('input[name=password]', '');
-    await page.click('button[type=submit]');
-    await sleep(2000);
-    var links = await getjsonposts();
-    var comments = ["That's amazing! I like it ๐","Love it !", "Your posts are truly amazing ๐","Moments that stay forever","This shot is great ๐”", "๐๐๐๐ ", "Ah such a happy location! ๐‘", "Stunning ๐‘", "๐wow, great pic๐‘",,"What a surreal post ๐ค—","loving the content ๐’—","What a stunning post","What an amazing shot ๐๐๐","Epic โค๐","Amazing ๐‘๐ผ","Awesome๐๐’•","Nice ๐๐๐","Nice ๐","Epic ๐ฎ"]
-    var i = 0;
-    for (var li of links) {
-        await page.goto(li);
-        console.log('testing')
-        try {
-            await page.waitFor('span.glyphsSpriteHeart__outline__24__grey_9', {timeout : 4000});
-            await page.click('span.glyphsSpriteHeart__outline__24__grey_9')
-            await page.waitFor('.FPmhX', {timeout : 4000});
-            var username = await page.$eval('.notranslate', e => e.title);
-            console.log(username);
-            var comment = comments[Math.floor(Math.random()*comments.length)] + ' @'+username;
-            await page.type('textarea', comment);
-            await sleep(2000);
-            await page.focus('textarea')
-            await page.keyboard.press('Enter');
-            await page.keyboard.press('Enter');
-            console.log(comment + 'on '+ li)
-            await sleep(120000);
-            i++;
-        } catch(e) {
-            console.log(e);
-        }
-    }
-}
-
-
-async function follow(user, pass) {
-    let response = await fetch('http://127.0.0.1/follower/'+user);
-    let json = await response.json();
-    let url = json[0]['url'];
-    console.log(url);
-    const browser = await puppeteer.launch({headless: true});
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Fnoorain_sayed%2F&source=profile_posts');
+    await page.goto('https://www.instagram.com/accounts/login/');
     await page.waitFor('input[name=username]');
     await page.type('input[name=username]', user);
     await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
     await sleep(5000);
-    var list = await getjson(url);
-    list = [...new Set(list)];
-    for (var j = json[0]['last']; j < list.length; j++) {
+    var list = await fse.readFile(users);
+    list = JSON.parse(list);
+    for (var li of list) {
         try {
-            await page.goto('https://www.instagram.com/' + list[j]);
+            await page.goto('https://www.instagram.com/' + li);
             try {
                 const linkHandlers = await page.$x("//button[contains(text(), 'Follow')]");
                 await linkHandlers[0].click();
-                console.log(user + ' following ' + list[j]);
+                clear();
+                console.log('following ' + li);
             } catch (e) {
 
             }
-            let total = list.length - 1;
-            let response = await fetch('http://127.0.0.1/number/' + user + '/' + total + '/' + j);
         } catch(e) {
 
         }
-        await sleep(108000);
+        await sleep(interval*1000);
     }
+    browser.close();
+    return;
 }
 
 async function autoScroll(page){
