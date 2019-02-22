@@ -1,8 +1,8 @@
 {
-  "name": "instagram",
+  "name": "instagram-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "instagram.js",
   "dependencies": {
     "@octokit/rest": "^16.16.0",
     "body-parser": "^1.18.3",

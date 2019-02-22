@@ -24,21 +24,20 @@ console.log('' +
 
 program
     .version('1.0')
-    .option('--followers [value]', 'Scrape followers of a user --followers muaz_asif')
-    .option('--following [value]', 'Scrape following of a user --following muaz_asif')
-    .option('--posts [value]', 'Scrape posts from location, profile, tag, search page --posts https://www.instagram.com/muaz_asif')
-    .option('-u, --username [value]', 'Your Username', 'muaz_asif')
-    .option('-p, --password [value]', 'Your Password', '')
+    .option('--followers [value]', 'Scrape followers of a user --followers muaz_asif -u USERNAME -p PASSWORD -f FILENAME')
+    .option('--following [value]', 'Scrape following of a user --following muaz_asif -u USERNAME -p PASSWORD -f FILENAME')
+    .option('--posts [value]', 'Scrape posts from location, profile, tag, search page --posts https://www.instagram.com/muaz_asif -f FILENAME')
+    .option('--likers [value]', 'Scrape likers from post --likers https://www.instagram.com/p/BtJOmVqFue1/ -u USERNAME -p PASSWORD -f FILENAME')
+    .option('-u, --username [value]', 'Your Username')
+    .option('-p, --password [value]', 'Your Password')
     .option('-f, --file [value]', 'File Name', 'File')
     .parse(process.argv);
-     if (program.followers) {
-        console.log('here')
+     if (program.followers)
         following(program.following,program.username,program.password,program.file)
-    }
-    if (program.posts) {
+     if (program.posts)
         posts(program.posts,program.file);
-    }
-
+     if (program.likers)
+         likers(program.likers,program. username,program.password,program.file);
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -190,21 +189,19 @@ async function posts(url,file) {
     }
 }
 
-async function likers(post,file) {
-    console.log('launching puppeteer')
-    const browser = await puppeteer.launch({headless: true});
+async function likers(post,user,pass,file) {
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Ffollowforfollowback%2F&source=profile_posts');
+    await page.goto('https://www.instagram.com/accounts/login/?next=%2Fmuaz_asif%2F&source=profile_posts');
     await page.waitFor('input[name=username]');
-    await page.type('input[name=username]', 'muaz_asif');
-    await page.type('input[name=password]', '');
+    await page.type('input[name=username]', user);
+    await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
     await sleep(2000);
-
-        await page.goto('https://www.instagram.com/p/'+post);
-        // await sleep(50000);
+        console.log('Scraping likers from '+post)
+        await page.goto(post);
         try {
             const linkHandlers = await page.$x('//*[@id="react-root"]/section/main/div/div/article/div[2]/section[2]/div/div/a');
             await linkHandlers[0].click();
@@ -223,25 +220,18 @@ async function likers(post,file) {
                 user = await page.$$eval('._7UhW9 a', as => as.map(a => a.innerText));
                 await sleep(1000);
                 i++;
-
                 users = users.concat(user);
                 let u = [...new Set(users)];
-                console.log(post + ' total : ' + u.length+ ' '+ i);
+                clear();
+                console.log('total : ' + u.length);
                 var json = JSON.stringify(u);
                 if (u.length !== 0) {
-                    console.log('file saved at '+file+'/'+post+'.json')
-                    fse.outputFile('files/'+file+'/'+post+'.json', json)
+                    console.log('file saved at files/'+file+'.json')
+                    fse.outputFile('files/'+file+'.json', json)
                 }
             }
         }
         browser.close();
-        console.log('moving to next');
-        return;
-}
-
-async function getlikers() {
-
-
 }
 
 async function like() {
