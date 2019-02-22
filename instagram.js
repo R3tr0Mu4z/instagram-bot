@@ -1,38 +1,42 @@
 #!/usr/bin/env node
 const program = require('commander');
-const express = require('express');
-const router = express.Router();
-const app = express();
-const bodyParser = require('body-parser');
 const fse = require('fs-extra');
-const fetch = require('isomorphic-fetch')
-const PORT = process.env.PORT || 8080;
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+const fetch = require('isomorphic-fetch');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const chalk = require('chalk');
-const figlet = require('figlet');
 const clear = require('clear');
 const inquirer   = require('inquirer');
-const instructions = require('./instructions');
+
+clear();
+console.log('' +
+'\'####:\'##::: ##::\'######::\'########::::\'###:::::\'######:::\'########:::::\'###::::\'##::::\'##:\'########::::\'#####:::\'########:\n' +
+'. ##:: ###:: ##:\'##... ##:... ##..::::\'## ##:::\'##... ##:: ##.... ##:::\'## ##::: ###::\'###: ##.... ##::\'##.. ##::... ##..::\n' +
+': ##:: ####: ##: ##:::..::::: ##:::::\'##:. ##:: ##:::..::: ##:::: ##::\'##:. ##:: ####\'####: ##:::: ##:\'##:::: ##:::: ##::::\n' +
+': ##:: ## ## ##:. ######::::: ##::::\'##:::. ##: ##::\'####: ########::\'##:::. ##: ## ### ##: ########:: ##:::: ##:::: ##::::\n' +
+': ##:: ##. ####::..... ##:::: ##:::: #########: ##::: ##:: ##.. ##::: #########: ##. #: ##: ##.... ##: ##:::: ##:::: ##::::\n' +
+': ##:: ##:. ###:\'##::: ##:::: ##:::: ##.... ##: ##::: ##:: ##::. ##:: ##.... ##: ##:.:: ##: ##:::: ##:. ##:: ##::::: ##::::\n' +
+'\'####: ##::. ##:. ######::::: ##:::: ##:::: ##:. ######::: ##:::. ##: ##:::: ##: ##:::: ##: ########:::. #####:::::: ##::::\n' +
+    '....::..::::..:::......::::::..:::::..:::::..:::......::::..:::::..::..:::::..::..:::::..::........:::::.....:::::::..:::::\n' +
+    '' +
+    '' +
+    'By git@R3tr0mu4z');
 
 program
     .version('1.0')
-    .option('--followers [value]', 'Scrape followers of a user', 'sy3dmu4z')
-    .option('--following [value]', 'Scrape following of a user', 'sy3dmu4z')
-    .option('--posts [value]', 'Scrape posts from location, profile, tag, search page', '')
-    .option('-u, --username [value]', 'Your Username', '')
+    .option('--followers [value]', 'Scrape followers of a user --followers muaz_asif')
+    .option('--following [value]', 'Scrape following of a user --following muaz_asif')
+    .option('--posts [value]', 'Scrape posts from location, profile, tag, search page --posts https://www.instagram.com/muaz_asif')
+    .option('-u, --username [value]', 'Your Username', 'muaz_asif')
     .option('-p, --password [value]', 'Your Password', '')
     .option('-f, --file [value]', 'File Name', 'File')
     .parse(process.argv);
-    console.log(program);
-    //  if (program.followers) {
-    //     console.log('here')
-    //     following(program.following,program.username,program.password,program.file)
-    // }
+     if (program.followers) {
+        console.log('here')
+        following(program.following,program.username,program.password,program.file)
+    }
     if (program.posts) {
-        posts(program.posts);
+        posts(program.posts,program.file);
     }
 
 
@@ -106,20 +110,16 @@ async function followers(target,user,pass,file,h) {
 }
 
 async function following(target,user,pass,file) {
-
     const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
-
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
     await page.goto('https://www.instagram.com/accounts/login/?next=%2F'+user+'%2F&source=profile_posts');
-
     await page.waitFor('input[name=username]', {timeout : 4000});
     await page.type('input[name=username]', user);
     await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
     await sleep(2000);
-
     try {
         const linkHandlers = await page.$x("//button[contains(text(), 'Not Now')]");
         await linkHandlers[0].click();
@@ -133,13 +133,11 @@ async function following(target,user,pass,file) {
     } catch(e) {
         console.log(e)
     }
-
     autoScroll(page);
     var n = 5000;
     var i = 0;
     var users = [];
     while (i < n){
-
         var list = await page.$$('li');
         for (var li of list) {
             try {
@@ -161,12 +159,11 @@ async function following(target,user,pass,file) {
     }
 }
 
-async function posts(url) {
-    console.log('launching puppeteer')
-    const browser = await puppeteer.launch({headless: true});
+async function posts(url,file) {
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Ffollowforfollowback%2F&source=profile_posts');
+    await page.goto(url);
     await sleep(2000);
     await page.goto(url);
     await page.waitFor('.Nnq7C');
@@ -174,20 +171,20 @@ async function posts(url) {
     var links = {};
     var i = 0;
     var n = 50000;
-    var users = [];
+    var posts = [];
     while (i < n) {
         var list = await page.$$('.Nnq7C');
         for (var li of list) {
-            user = await page.$$eval('.Nnq7C a', as => as.map(a => a.href));
+            post = await page.$$eval('.Nnq7C a', as => as.map(a => a.href));
             await sleep(1000);
             i++;
-
-            users = users.concat(user);
-            let u = [...new Set(users)];
-            console.log(u);
+            posts = posts.concat(post);
+            let u = [...new Set(posts)];
             var json = JSON.stringify(u);
             if (u.length !== 0) {
-                fse.outputFile('files/travel.json', json)
+                fse.outputFile('files/'+file+'.json', json)
+                clear();
+                console.log('file saved at files/'+file+'.json')
             }
         }
     }
@@ -434,21 +431,6 @@ async function blockImages(page) {
     });
 }
 
-app.listen(PORT);
+// app.listen(PORT);
 
-
-
-module.exports = {
-    getCurrentDirectoryBase : () => {
-        return path.basename(process.cwd());
-    },
-
-    directoryExists : (filePath) => {
-        try {
-            return fs.statSync(filePath).isDirectory();
-        } catch (err) {
-            return false;
-        }
-    }
-};
 
