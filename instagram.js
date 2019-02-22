@@ -55,7 +55,7 @@ program
         comment(program.comment,program.file,program.username,program.password,program.interval);
     if (program.follow)
         follow(program.follow,program.username,program.password,program.interval);
-console.log(program)
+// console.log(program)
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
