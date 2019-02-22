@@ -1,95 +1,122 @@
-var express = require('express');
-var router = express.Router();
-// var app = express();
-var bodyParser = require('body-parser');
-var fse = require('fs-extra');
-var fetch = require('isomorphic-fetch')
-// const PORT = process.env.PORT || 8080;
-// app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(bodyParser.json());
+#!/usr/bin/env node
+const program = require('commander');
+const express = require('express');
+const router = express.Router();
+const app = express();
+const bodyParser = require('body-parser');
+const fse = require('fs-extra');
+const fetch = require('isomorphic-fetch')
+const PORT = process.env.PORT || 8080;
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 const puppeteer = require('puppeteer');
+const path = require('path');
+const chalk = require('chalk');
+const figlet = require('figlet');
+const clear = require('clear');
+const inquirer   = require('inquirer');
+const instructions = require('./instructions');
+
+program
+    .version('1.0')
+    .option('--followers [value]', 'Scrape followers of a user', 'sy3dmu4z')
+    .option('--following [value]', 'Scrape following of a user', 'sy3dmu4z')
+    .option('--posts [value]', 'Scrape posts from location, profile, tag, search page', '')
+    .option('-u, --username [value]', 'Your Username', '')
+    .option('-p, --password [value]', 'Your Password', '')
+    .option('-f, --file [value]', 'File Name', 'File')
+    .parse(process.argv);
+    console.log(program);
+    //  if (program.followers) {
+    //     console.log('here')
+    //     following(program.following,program.username,program.password,program.file)
+    // }
+    if (program.posts) {
+        posts(program.posts);
+    }
+
+
 function sleep(ms) {
-    // console.log('waiting for '+ ms);
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// app.post('/follow', function(request, response) {
-//     var username = request.body.username;
-//     var password = request.body.password;
-//     console.log(request.body.password);
-//     var list = [];
-//
-//     response.send('Process');
-//     var process =  follow(username, password, list);
-// });
-async function followers() {
+
+async function followers(target,user,pass,file,h) {
     const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Ffollow4followdc.new%2F&source=profile_posts');
+    await page.goto('https://www.instagram.com/'+target+'/followers/');
     await page.waitFor('input[name=username]');
-    await page.type('input[name=username]', '');
-    await page.type('input[name=password]', '');
+    await page.type('input[name=username]', user);
+    await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
     await sleep(5000);
     try {
         const linkHandlers = await page.$x("//button[contains(text(), 'Not Now')]");
         await linkHandlers[0].click();
+        clear();
+        console.log('working');
     } catch(e) {
-        console.log('noo')
+        console.log('Error, try using -h false');
+        return;
     }
     await sleep(5000);
     try {
         await sleep(2000);
         const linkHandlers = await page.$x('//*[@id="react-root"]/section/main/div/ul/li[2]/a')
+        clear();
+        console.log('working');
         await linkHandlers[0].click();
     } catch(e) {
-        console.log('fail to find link')
+        console.log('Error, try using -h false');
+        return;
     }
-
-
     var n = 5000;
     var i = 0;
     await sleep(5000);
     autoScroll(page);
     while (i < n){
-
-        var list = await page.$$(' .jjbaz li');
+        try {
+            var list = await page.$$('.PZuss li');
+        } catch(e) {
+            console.log(e);
+        }
         var users = [];
         for (var li of list) {
-	try {
-            var user = await li.$eval('.notranslate', e => e.getAttribute('href'));
+        try {
+            var user = await li.$eval('.FPmhX', e => e.getAttribute('href'));
             user = user.substring(1, user.length-1);
             users = users.concat(user);
-	} catch(e) {
-		console.log('notranslate');
-	}
-            console.log(users);
+            } catch(e) {
+             console.log(e);
+                return;
+            }
         }
         await sleep(2000);
         i++;
-
         var json = JSON.stringify(users);
-        console.log(users.length);
+        clear();
+        console.log('Total : '+users.length);
         if (users.length !== 0) {
-            fse.outputFile('files/users.json', json)
+            console.log('Saving file at files/'+file+'.json');
+            fse.outputFile('files/'+file+'.json', json)
         }
     }
 }
-followers();
-async function following() {
+
+async function following(target,user,pass,file) {
 
     const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
 
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.setViewport({ width: 414, height: 736});
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Ftraveller.muaz%2F&source=profile_posts');
+    await page.goto('https://www.instagram.com/accounts/login/?next=%2F'+user+'%2F&source=profile_posts');
 
     await page.waitFor('input[name=username]', {timeout : 4000});
-    await page.type('input[name=username]', '');
-    await page.type('input[name=password]', '');
+    await page.type('input[name=username]', user);
+    await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
     await sleep(2000);
 
@@ -97,7 +124,7 @@ async function following() {
         const linkHandlers = await page.$x("//button[contains(text(), 'Not Now')]");
         await linkHandlers[0].click();
     } catch(e) {
-        console.log('noo')
+        console.log(e)
     }
     try {
         await sleep(2000);
@@ -107,7 +134,7 @@ async function following() {
         console.log(e)
     }
 
-    // autoScroll(page);
+    autoScroll(page);
     var n = 5000;
     var i = 0;
     var users = [];
@@ -115,33 +142,33 @@ async function following() {
 
         var list = await page.$$('li');
         for (var li of list) {
-            var user = await li.$eval('a.FPmhX', e => e.getAttribute('href'));
-            user = user.substring(1, user.length-1);
-            users = users.concat(user);
-            console.log(users);
+            try {
+                var user = await li.$eval('.notranslate', e => e.getAttribute('href'));
+                user = user.substring(1, user.length - 1);
+                users = users.concat(user);
+                users = [...new Set(users)];
+            } catch(e) {
+
+            }
         }
         i++;
-
         var json = JSON.stringify(users);
-        console.log(users.length);
+        clear();
         if (users.length !== 0) {
-            fse.outputFile('files/users.json', json)
+            console.log('File saved at /files'+file+'.json');
+            fse.outputFile('files/'+file+'.json', json)
         }
     }
 }
 
-async function posts() {
+async function posts(url) {
     console.log('launching puppeteer')
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.goto('https://www.instagram.com/accounts/login/?next=%2Ffollowforfollowback%2F&source=profile_posts');
-    await page.waitFor('input[name=username]');
-    await page.type('input[name=username]', '');
-    await page.type('input[name=password]', '');
-    await page.click('button[type=submit]');
     await sleep(2000);
-    await page.goto('https://www.instagram.com/explore/tags/followforfollowback/');
+    await page.goto(url);
     await page.waitFor('.Nnq7C');
     autoScroll(page);
     var links = {};
@@ -406,6 +433,22 @@ async function blockImages(page) {
         }
     });
 }
-// console.log('test')
-// console.log("Running on port "+ PORT);
-// app.listen(PORT);
+
+app.listen(PORT);
+
+
+
+module.exports = {
+    getCurrentDirectoryBase : () => {
+        return path.basename(process.cwd());
+    },
+
+    directoryExists : (filePath) => {
+        try {
+            return fs.statSync(filePath).isDirectory();
+        } catch (err) {
+            return false;
+        }
+    }
+};
+
