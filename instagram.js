@@ -43,7 +43,9 @@ program
     .option('-i, --interval <n>', 'Interval in seconds', '100')
     .option('--post [value]', 'File containing posts')
     .parse(process.argv);
-     if (program.followers)
+    if (program.followers)
+        followers(program.followers,program.username,program.password,program.file)
+     if (program.following)
         following(program.following,program.username,program.password,program.file)
      if (program.posts)
         posts(program.posts,program.file);
@@ -62,7 +64,8 @@ function sleep(ms) {
 }
 
 
-async function followers(target,user,pass,file,h) {
+async function followers(target,user,pass,file) {
+    console.log('Scraping followers of '+target)
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
@@ -111,15 +114,14 @@ async function followers(target,user,pass,file,h) {
             users = users.concat(user);
             } catch(e) {
              console.log(e);
-                return;
             }
         }
         await sleep(2000);
         i++;
         var json = JSON.stringify(users);
         clear();
-        console.log('Total : '+users.length);
         if (users.length !== 0) {
+            console.log('Total : '+users.length);
             console.log('Saving file at files/'+file+'.json');
             fse.outputFile('files/'+file+'.json', json)
         }
@@ -127,6 +129,7 @@ async function followers(target,user,pass,file,h) {
 }
 
 async function following(target,user,pass,file) {
+    console.log('Scraping followings of '+target)
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
@@ -168,8 +171,9 @@ async function following(target,user,pass,file) {
         }
         i++;
         var json = JSON.stringify(users);
-        clear();
         if (users.length !== 0) {
+            clear();
+            console.log('Total : '+users.length)
             console.log('File saved at /files'+file+'.json');
             fse.outputFile('files/'+file+'.json', json)
         }
@@ -177,6 +181,7 @@ async function following(target,user,pass,file) {
 }
 
 async function posts(url,file) {
+    console.log('Scraping posts from '+url)
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
@@ -201,6 +206,7 @@ async function posts(url,file) {
             if (u.length !== 0) {
                 fse.outputFile('files/'+file+'.json', json)
                 clear();
+                console.log('Total : '+u.length)
                 console.log('file saved at files/'+file+'.json')
             }
         }
@@ -276,7 +282,7 @@ async function like(location,user,pass,interval) {
 
 async function comment(posts,comments,user,pass,interval) {
     console.log('launching puppeteer')
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.goto('https://www.instagram.com/accounts/login/');
     await page.waitFor('input[name=username]');
@@ -302,7 +308,7 @@ async function comment(posts,comments,user,pass,interval) {
 
 
 async function follow(users,user,pass,interval) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     await page.goto('https://www.instagram.com/accounts/login/');
