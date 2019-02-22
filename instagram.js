@@ -10,6 +10,12 @@ const inquirer   = require('inquirer');
 
 clear();
 console.log('' +
+    '' +
+    '' +
+    '' +
+    '' +
+    '' +
+    '' +
 '\'####:\'##::: ##::\'######::\'########::::\'###:::::\'######:::\'########:::::\'###::::\'##::::\'##:\'########::::\'#####:::\'########:\n' +
 '. ##:: ###:: ##:\'##... ##:... ##..::::\'## ##:::\'##... ##:: ##.... ##:::\'## ##::: ###::\'###: ##.... ##::\'##.. ##::... ##..::\n' +
 ': ##:: ####: ##: ##:::..::::: ##:::::\'##:. ##:: ##:::..::: ##:::: ##::\'##:. ##:: ####\'####: ##:::: ##:\'##:::: ##:::: ##::::\n' +
@@ -28,9 +34,12 @@ program
     .option('--following [value]', 'Scrape following of a user --following muaz_asif -u USERNAME -p PASSWORD -f FILENAME')
     .option('--posts [value]', 'Scrape posts from location, profile, tag, search page --posts https://www.instagram.com/muaz_asif -f FILENAME')
     .option('--likers [value]', 'Scrape likers from post --likers https://www.instagram.com/p/BtJOmVqFue1/ -u USERNAME -p PASSWORD -f FILENAME')
+    .option('--like [value]', 'Like posts (import posts from json file) --like ./file/File.json  -u USERNAME -p PASSWORD -i SECONDS')
     .option('-u, --username [value]', 'Your Username')
     .option('-p, --password [value]', 'Your Password')
     .option('-f, --file [value]', 'File Name', 'File')
+    .option('-i, --interval <n>', 'Interval in seconds', '100')
+    .option('--post [value]', 'File containing posts')
     .parse(process.argv);
      if (program.followers)
         following(program.following,program.username,program.password,program.file)
@@ -38,6 +47,9 @@ program
         posts(program.posts,program.file);
      if (program.likers)
          likers(program.likers,program. username,program.password,program.file);
+    if (program.like)
+         like(program.like,program. username,program.password,program.interval);
+    console.log(program)
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -234,25 +246,25 @@ async function likers(post,user,pass,file) {
         browser.close();
 }
 
-async function like() {
-    console.log('launching puppeteer')
-    const browser = await puppeteer.launch({headless: true});
+async function like(location,user,pass,interval) {
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
-    await page.goto('https://www.instagram.com/accounts/login/?next=%2Fgentlebikers%2F&source=profile_posts');
+    await page.goto('https://www.instagram.com/accounts/login/');
     await page.waitFor('input[name=username]');
-    await page.type('input[name=username]', '');
-    await page.type('input[name=password]', '');
+    await page.type('input[name=username]', user);
+    await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
-    var links = await getjson();
-    console.log(links);
+    let links = await fse.readFile(location);
+    links = JSON.parse(links);
     await sleep(2000);
     for (var li of links) {
         await page.goto(li);
+        clear();
         console.log('liking '+li);
         await page.waitFor('span.glyphsSpriteHeart__outline__24__grey_9');
         await page.click('span.glyphsSpriteHeart__outline__24__grey_9');
-        await sleep(180000);
+        await sleep(interval*1000);
     }
 }
 
@@ -317,42 +329,6 @@ async function likecomment() {
     }
 }
 
-async function tagusers() {
-    var links = await getjson();
-    const browser = await puppeteer.launch({headless: true});
-    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
-    const page = await browser.newPage();
-    await sleep(2000);
-    var users = [];
-    for (var li of links) {
-        try {
-            await page.goto(li);
-            await page.waitFor('span.glyphsSpriteHeart__outline__24__grey_9', {timeout: 4000});
-            user = await page.$eval('.notranslate', e => e.getAttribute('href'));
-            users = users.concat(user);
-            let u = [...new Set(users)];
-            var json = JSON.stringify(u);
-            console.log(u.length);
-            if (u.length !== 0) {
-                fse.outputFile('files/tagusers.json', json)
-            }
-        } catch(e) {
-            console.log('err')
-        }
-    }
-}
-async function getjson(url) {
-    const response = await fetch(url);
-    console.log('getting '+ url)
-    const json = await response.json();
-    return json;
-}
-
-async function getjsonposts() {
-    const response = await fetch('https://api.myjson.com/bins/1bgga8');
-    const json = await response.json();
-    return json;
-}
 
 async function follow(user, pass) {
     let response = await fetch('http://127.0.0.1/follower/'+user);
@@ -420,7 +396,5 @@ async function blockImages(page) {
         }
     });
 }
-
-// app.listen(PORT);
 
 
