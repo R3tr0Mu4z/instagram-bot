@@ -37,6 +37,7 @@ program
     .option('--like [value]', 'Like posts (import posts from json file) --like ./files/Posts.json  -u USERNAME -p PASSWORD -i SECONDS')
     .option('--comment [value]', 'Like posts (import posts from json file) --comment ./files/Posts.json -f ./files/Comments.json  -u USERNAME -p PASSWORD -i SECONDS')
     .option('--follow [value]', 'Follow users  --follow ./files/Users.json  -u USERNAME -p PASSWORD -i SECONDS')
+    .option('--posters [value]', 'Scrape posters --posters ./files/Posts.json -f FILENAME')
     .option('-u, --username [value]', 'Your Username')
     .option('-p, --password [value]', 'Your Password')
     .option('-f, --file [value]', 'File Name', 'File')
@@ -57,6 +58,8 @@ program
         comment(program.comment,program.file,program.username,program.password,program.interval);
     if (program.follow)
         follow(program.follow,program.username,program.password,program.interval);
+    if (program.posters)
+        posters(program.posters,program.file);
 // console.log(program)
 
 function sleep(ms) {
@@ -214,6 +217,7 @@ async function posts(url,file) {
 }
 
 async function likers(post,user,pass,file) {
+    console.log('Scraping likers');
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
@@ -224,37 +228,37 @@ async function likers(post,user,pass,file) {
     await page.type('input[name=password]', pass);
     await page.click('button[type=submit]');
     await sleep(2000);
-        console.log('Scraping likers from '+post)
-        await page.goto(post);
-        try {
-            const linkHandlers = await page.$x('//*[@id="react-root"]/section/main/div/div/article/div[2]/section[2]/div/div/a');
-            await linkHandlers[0].click();
-        } catch(e) {
-            console.log(e);
-        }
-        autoScroll(page);
-        var links = {};
-        var i = 0;
-        var n = 157;
-        var users = [];
-        var prev  = 0;
-        while (i < n) {
-            var list = await page.$$('._7UhW9');
-            for (var i = 0; i < list.length; i++) {
-                user = await page.$$eval('._7UhW9 a', as => as.map(a => a.innerText));
-                await sleep(1000);
-                i++;
-                users = users.concat(user);
-                let u = [...new Set(users)];
-                clear();
-                console.log('total : ' + u.length);
-                var json = JSON.stringify(u);
-                if (u.length !== 0) {
-                    console.log('file saved at files/'+file+'.json')
-                    fse.outputFile('files/'+file+'.json', json)
-                }
+    console.log('Scraping likers from '+post)
+    await page.goto(post);
+    try {
+        const linkHandlers = await page.$x('//*[@id="react-root"]/section/main/div/div/article/div[2]/section[2]/div/div/a');
+        await linkHandlers[0].click();
+    } catch(e) {
+        console.log(e);
+    }
+    autoScroll(page);
+    var links = {};
+    var i = 0;
+    var n = 157;
+    var users = [];
+    var prev  = 0;
+    while (i < n) {
+        var list = await page.$$('._7UhW9');
+        for (var i = 0; i < list.length; i++) {
+            user = await page.$$eval('._7UhW9 a', as => as.map(a => a.innerText));
+            await sleep(1000);
+            i++;
+            users = users.concat(user);
+            let u = [...new Set(users)];
+            clear();
+            console.log('total : ' + u.length);
+            var json = JSON.stringify(u);
+            if (u.length !== 0) {
+                console.log('file saved at files/'+file+'.json')
+                fse.outputFile('files/'+file+'.json', json)
             }
         }
+    }
         browser.close();
 }
 
@@ -281,7 +285,6 @@ async function like(location,user,pass,interval) {
 }
 
 async function comment(posts,comments,user,pass,interval) {
-    console.log('launching puppeteer')
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.goto('https://www.instagram.com/accounts/login/');
@@ -337,6 +340,32 @@ async function follow(users,user,pass,interval) {
     }
     browser.close();
     return;
+}
+
+async function posters(posts,file) {
+    console.log('Scraping posters')
+    var links = await fse.readFile(posts);
+    const browser = await puppeteer.launch({headless: true});
+    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
+    const page = await browser.newPage();
+    await sleep(2000);
+    var users = [];
+    for (var li of links) {
+        try {
+            await page.goto(li);
+            await page.waitFor('span.glyphsSpriteHeart__outline__24__grey_9', {timeout: 4000});
+            user = await page.$eval('.notranslate', e => e.getAttribute('href'));
+            users = users.concat(user);
+            let u = [...new Set(users)];
+            var json = JSON.stringify(u);
+            if (u.length !== 0) {
+                console.log('Total '+u.length);
+                fse.outputFile('files/'+file+'.json', json)
+            }
+        } catch(e) {
+            console.log('err')
+        }
+    }
 }
 
 async function autoScroll(page){
