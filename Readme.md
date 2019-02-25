@@ -17,6 +17,8 @@ Options:
   --like [value]          Like posts (import posts from json file) --like ./files/Posts.json  -u USERNAME -p PASSWORD -i SECONDS
   --comment [value]       Like posts (import posts from json file) --comment ./files/Posts.json -f ./files/Comments.json  -u USERNAME -p PASSWORD -i SECONDS
   --follow [value]        Follow users  --follow ./files/Users.json  -u USERNAME -p PASSWORD -i SECONDS
+  --unfollow [value]      Unfollow users  --unfollow ./files/Users.json  -u USERNAME -p PASSWORD -i SECONDS
+  --posters [value]       Scrape posters --posters ./files/Posts.json -f FILENAME
   -u, --username [value]  Your Username
   -p, --password [value]  Your Password
   -f, --file [value]      File Name (default: "File")
@@ -39,7 +41,7 @@ instagram-bot --likers https://www.instagram.com/p/BtJOmVqFue1/ -u USERNAME -p P
 ```
 Like Posts
 ```
-instagram-bot -like ./files/Posts.json  -u USERNAME -p PASSWORD -i SECONDS
+instagram-bot --like ./files/Posts.json  -u USERNAME -p PASSWORD -i SECONDS
 ```
 Check ./files/Posts.json for sample posts
 
@@ -54,3 +56,13 @@ Follow
 instagram-bot --follow ./files/Users.json  -u USERNAME -p PASSWORD -i SECONDS
 ```
 Check ./files/Users.json for sample users
+
+Scrape posters from posts
+```
+instagram-bot --posters ./files/Posts.json -f FILENAME
+```
+Unfollow users
+Make a list of followers then
+```
+instagram-bot --unfollow ./files/Users.json  -u USERNAME -p PASSWORD -i SECONDS
+```
