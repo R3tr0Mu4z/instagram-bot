@@ -7,7 +7,18 @@ npm install -g ./
 
 Commands : 
 ```
-instagram-bot -h
+__        /\ \            /\ \__   
+/\_\     __\ \ \____    ___\ \ ,_\  
+\/\ \  /'_ `\ \ '__`\  / __`\ \ \/  
+ \ \ \/\ \L\ \ \ \L\ \/\ \L\ \ \ \_ 
+  \ \_\ \____ \ \_,__/\ \____/\ \__\
+   \/_/\/___L\ \/___/  \/___/  \/__/
+         /\____/                    
+         \_/__/                     
+
+Instagram Bot By : git@R3tr0mu4z
+Usage: instagram-bot [options]
+
 Options:
   -V, --version           output the version number
   --followers [value]     Scrape followers of a user --followers target-username -u USERNAME -p PASSWORD -f FILENAME
