@@ -1,32 +1,21 @@
 #!/usr/bin/env node
 const program = require('commander');
 const fse = require('fs-extra');
-const fetch = require('isomorphic-fetch');
 const puppeteer = require('puppeteer');
 const path = require('path');
 const chalk = require('chalk');
 const clear = require('clear');
-const inquirer   = require('inquirer');
 
 clear();
-console.log('' +
-    '' +
-    '' +
-    '' +
-    '' +
-    '' +
-    '' +
-'\'####:\'##::: ##::\'######::\'########::::\'###:::::\'######:::\'########:::::\'###::::\'##::::\'##:\'########::::\'#####:::\'########:\n' +
-'. ##:: ###:: ##:\'##... ##:... ##..::::\'## ##:::\'##... ##:: ##.... ##:::\'## ##::: ###::\'###: ##.... ##::\'##.. ##::... ##..::\n' +
-': ##:: ####: ##: ##:::..::::: ##:::::\'##:. ##:: ##:::..::: ##:::: ##::\'##:. ##:: ####\'####: ##:::: ##:\'##:::: ##:::: ##::::\n' +
-': ##:: ## ## ##:. ######::::: ##::::\'##:::. ##: ##::\'####: ########::\'##:::. ##: ## ### ##: ########:: ##:::: ##:::: ##::::\n' +
-': ##:: ##. ####::..... ##:::: ##:::: #########: ##::: ##:: ##.. ##::: #########: ##. #: ##: ##.... ##: ##:::: ##:::: ##::::\n' +
-': ##:: ##:. ###:\'##::: ##:::: ##:::: ##.... ##: ##::: ##:: ##::. ##:: ##.... ##: ##:.:: ##: ##:::: ##:. ##:: ##::::: ##::::\n' +
-'\'####: ##::. ##:. ######::::: ##:::: ##:::: ##:. ######::: ##:::. ##: ##:::: ##: ##:::: ##: ########:::. #####:::::: ##::::\n' +
-    '....::..::::..:::......::::::..:::::..:::::..:::......::::..:::::..::..:::::..::..:::::..::........:::::.....:::::::..:::::\n' +
-    '' +
-    '' +
-    'By git@R3tr0mu4z');
+console.log(chalk.green(" __        /\\ \\            /\\ \\__   \n" +
+    "/\\_\\     __\\ \\ \\____    ___\\ \\ ,_\\  \n" +
+    "\\/\\ \\  /'_ `\\ \\ '__`\\  / __`\\ \\ \\/  \n" +
+    " \\ \\ \\/\\ \\L\\ \\ \\ \\L\\ \\/\\ \\L\\ \\ \\ \\_ \n" +
+    "  \\ \\_\\ \\____ \\ \\_,__/\\ \\____/\\ \\__\\\n" +
+    "   \\/_/\\/___L\\ \\/___/  \\/___/  \\/__/\n" +
+    "         /\\____/                    \n" +
+    "         \\_/__/                     \n"));
+console.log(chalk.green("Instagram Bot By : git@R3tr0mu4z"));
 
 program
     .version('1.0')
@@ -37,6 +26,7 @@ program
     .option('--like [value]', 'Like posts (import posts from json file) --like ./files/Posts.json  -u USERNAME -p PASSWORD -i SECONDS')
     .option('--comment [value]', 'Like posts (import posts from json file) --comment ./files/Posts.json -f ./files/Comments.json  -u USERNAME -p PASSWORD -i SECONDS')
     .option('--follow [value]', 'Follow users  --follow ./files/Users.json  -u USERNAME -p PASSWORD -i SECONDS')
+    .option('--unfollow [value]', 'Unfollow users  --unfollow ./files/Users.json  -u USERNAME -p PASSWORD -i SECONDS')
     .option('--posters [value]', 'Scrape posters --posters ./files/Posts.json -f FILENAME')
     .option('-u, --username [value]', 'Your Username')
     .option('-p, --password [value]', 'Your Password')
@@ -44,22 +34,24 @@ program
     .option('-i, --interval <n>', 'Interval in seconds', '100')
     .option('--post [value]', 'File containing posts')
     .parse(process.argv);
-    if (program.followers)
-        followers(program.followers,program.username,program.password,program.file)
-     if (program.following)
-        following(program.following,program.username,program.password,program.file)
-     if (program.posts)
-        posts(program.posts,program.file);
-     if (program.likers)
-         likers(program.likers,program.username,program.password,program.file);
-    if (program.like)
-         like(program.like,program.username,program.password,program.interval);
-    if (program.comment)
-        comment(program.comment,program.file,program.username,program.password,program.interval);
-    if (program.follow)
-        follow(program.follow,program.username,program.password,program.interval);
-    if (program.posters)
-        posters(program.posters,program.file);
+if (program.followers)
+    followers(program.followers,program.username,program.password,program.file)
+if (program.following)
+    following(program.following,program.username,program.password,program.file)
+if (program.posts)
+    posts(program.posts,program.file);
+if (program.likers)
+    likers(program.likers,program.username,program.password,program.file);
+if (program.like)
+    like(program.like,program.username,program.password,program.interval);
+if (program.comment)
+    comment(program.comment,program.file,program.username,program.password,program.interval);
+if (program.follow)
+    follow(program.follow,program.username,program.password,program.interval);
+if (program.unfollow)
+    unfollow(program.unfollow,program.username,program.password,program.interval);
+if (program.posters)
+    posters(program.posters,program.file);
 // console.log(program)
 
 function sleep(ms) {
@@ -85,7 +77,7 @@ async function followers(target,user,pass,file) {
         clear();
         console.log('working');
     } catch(e) {
-        console.log('Error, try using -h false');
+        console.log(e);
         return;
     }
     await sleep(5000);
@@ -96,7 +88,7 @@ async function followers(target,user,pass,file) {
         console.log('working');
         await linkHandlers[0].click();
     } catch(e) {
-        console.log('Error, try using -h false');
+        console.log(e);
         return;
     }
     var n = 5000;
@@ -105,24 +97,23 @@ async function followers(target,user,pass,file) {
     autoScroll(page);
     while (i < n){
         try {
-            var list = await page.$$('.PZuss li');
+            var list = await page.$$('li');
         } catch(e) {
             console.log(e);
         }
         var users = [];
         for (var li of list) {
-        try {
-            var user = await li.$eval('.FPmhX', e => e.getAttribute('href'));
-            user = user.substring(1, user.length-1);
-            users = users.concat(user);
+            try {
+                var user = await li.$eval('.notranslate', e => e.getAttribute('href'));
+                user = user.substring(1, user.length-1);
+                users = users.concat(user);
             } catch(e) {
-             console.log(e);
+                console.log(e);
             }
         }
         await sleep(2000);
         i++;
         var json = JSON.stringify(users);
-        clear();
         if (users.length !== 0) {
             console.log('Total : '+users.length);
             console.log('Saving file at files/'+file+'.json');
@@ -177,7 +168,7 @@ async function following(target,user,pass,file) {
         if (users.length !== 0) {
             clear();
             console.log('Total : '+users.length)
-            console.log('File saved at /files'+file+'.json');
+            console.log('File saved at files'+file+'.json');
             fse.outputFile('files/'+file+'.json', json)
         }
     }
@@ -259,10 +250,11 @@ async function likers(post,user,pass,file) {
             }
         }
     }
-        browser.close();
+    browser.close();
 }
 
 async function like(location,user,pass,interval) {
+    console.log('Liking');
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
@@ -285,6 +277,7 @@ async function like(location,user,pass,interval) {
 }
 
 async function comment(posts,comments,user,pass,interval) {
+    console.log('Commenting');
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.goto('https://www.instagram.com/accounts/login/');
@@ -311,6 +304,7 @@ async function comment(posts,comments,user,pass,interval) {
 
 
 async function follow(users,user,pass,interval) {
+    console.log('Following');
     const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
@@ -330,6 +324,45 @@ async function follow(users,user,pass,interval) {
                 await linkHandlers[0].click();
                 clear();
                 console.log('following ' + li);
+            } catch (e) {
+
+            }
+        } catch(e) {
+
+        }
+        await sleep(interval*1000);
+    }
+    browser.close();
+    return;
+}
+
+async function unfollow(users,user,pass,interval) {
+    console.log('Unfollowing');
+    const browser = await puppeteer.launch({headless: true});
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
+    await page.goto('https://www.instagram.com/accounts/login/');
+    await page.waitFor('input[name=username]');
+    await page.type('input[name=username]', user);
+    await page.type('input[name=password]', pass);
+    await page.click('button[type=submit]');
+    await sleep(5000);
+    var list = await fse.readFile(users);
+    list = JSON.parse(list);
+    for (var li of list) {
+        try {
+            await page.goto('https://www.instagram.com/' + li);
+            try {
+                const linkHandlers = await page.$x("//button[contains(text(), 'Following')]");
+                await linkHandlers[0].click();
+                try {
+                    const linkHandlers = await page.$x("//button[contains(text(), 'Unfollow')]");
+                    await linkHandlers[0].click();
+                    clear();
+                    console.log('following ' + li);
+                } catch(e) {
+                    console.log(e);
+                }
             } catch (e) {
 
             }
@@ -399,5 +432,4 @@ async function blockImages(page) {
         }
     });
 }
-
 
