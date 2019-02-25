@@ -2,20 +2,16 @@
   "name": "instagram-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "instagram.js",
+  "main": "instagram-bot.js",
   "dependencies": {
     "@octokit/rest": "^16.16.0",
-    "body-parser": "^1.18.3",
     "chalk": "^2.4.2",
     "clear": "^0.1.0",
     "clui": "^0.3.6",
     "commander": "^2.19.0",
     "configstore": "^4.0.0",
     "express": "^4.16.4",
-    "figlet": "^1.2.1",
     "fs-extra": "^7.0.1",
-    "inquirer": "^6.2.2",
-    "isomorphic-fetch": "^2.2.1",
     "lodash": "^4.17.11",
     "minimist": "^1.2.0",
     "puppeteer": "^1.11.0",
@@ -23,7 +19,7 @@
     "touch": "^3.1.0"
   },
   "bin": {
-    "instagram-bot": "./instagram.js"
+    "instagram-bot": "./instagram-bot.js"
   },
   "devDependencies": {},
   "scripts": {
