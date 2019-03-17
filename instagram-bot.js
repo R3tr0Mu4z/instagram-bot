@@ -378,9 +378,10 @@ async function unfollow(users,user,pass,interval) {
 async function posters(posts,file) {
     console.log('Scraping posters')
     var links = await fse.readFile(posts);
+    links = JSON.parse(links);
     const browser = await puppeteer.launch({headless: true});
-    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25');
     const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5376e Safari/8536.25')
     await sleep(2000);
     var users = [];
     for (var li of links) {
